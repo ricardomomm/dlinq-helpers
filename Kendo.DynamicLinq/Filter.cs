@@ -55,7 +55,9 @@ namespace Kendo.DynamicLinq
             {"startswith", "StartsWith"},
             {"endswith", "EndsWith"},
             {"contains", "Contains"},
-            {"doesnotcontain", "Contains"}
+            {"doesnotcontain", "Contains"},
+            {"in", "in"},
+            {"custom", "custom"}
         };
 
         /// <summary>
@@ -100,19 +102,34 @@ namespace Kendo.DynamicLinq
 
             int index = filters.IndexOf(this);
 
-            string comparison = operators[Operator];
-            
-            if (Operator == "doesnotcontain")
+            if (operators.ContainsKey(Operator))
             {
-                return String.Format("!{0}.{1}(@{2})", Field, comparison, index);
-            }
+                string comparison = operators[Operator];
 
-            if (comparison == "StartsWith" || comparison == "EndsWith" || comparison == "Contains")
+                if (Operator == "doesnotcontain")
+                {
+                    return String.Format("!{0}.{1}(@{2})", Field, comparison, index);
+                }
+
+                if (comparison == "StartsWith" || comparison == "EndsWith" || comparison == "Contains")
+                {
+                    return String.Format("{0}.{1}(@{2})", Field, comparison, index);
+                }
+
+                if (comparison == "in")
+                {
+                    return String.Format("@{1}.Contains({0})", Field, index);
+                }
+
+                return String.Format("{0} {1} @{2}", Field, comparison, index);
+            }
+            else
             {
-                return String.Format("{0}.{1}(@{2})", Field, comparison, index);
+                // Custom filtering, use the operator as an Expression with two placeholders 
+                // {0} - FieldName
+                // {1} - Value
+                return String.Format(Operator, Field, index);
             }
-
-            return String.Format("{0} {1} @{2}", Field, comparison, index);
         }
     }
 }
